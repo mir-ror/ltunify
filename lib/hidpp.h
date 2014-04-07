@@ -74,7 +74,7 @@ typedef bool hidpp_msg_cb_t(HidppMessage *msg, void *userdata);
  * @return true iff the message is properly formatted and the dispatch is
  * successful.
  */
-bool hidpp_write_report(int fd, struct HidppMessage *msg);
+bool hidpp_write_report(int fd, HidppMessage *msg);
 
 /**
  * Reads messages and try to accept on one of them.
