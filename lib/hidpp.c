@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fcntl.h>
+#include <glob.h>
+#include <libgen.h>
 #include <poll.h>
 #include <stdio.h>
 #include <string.h>
@@ -66,6 +69,91 @@ static ssize_t poll_read(int fd, int timeout, void *buf, size_t count)
 	}
 
 	return r;
+}
+
+int hidpp_open(void)
+{
+	int fd = -1;
+	glob_t matches;
+	char hiddev_name[32] = {0};
+
+	if (!glob("/sys/class/hidraw/hidraw*/device/driver", 0, NULL, &matches)) {
+		size_t i;
+		char buf[1024];
+		for (i = 0; i < matches.gl_pathc; i++) {
+			ssize_t r;
+			char *name = matches.gl_pathv[i];
+			const char *last_comp;
+			char *dev_name;
+
+			r = readlink(name, buf, (sizeof buf) - 1);
+			if (r < 0) {
+				perror(name);
+				continue;
+			}
+
+			buf[r] = 0; /* readlink does not NUL-terminate */
+			last_comp = basename(buf);
+
+			/* retrieve 'hidrawX' name */
+			dev_name = name + sizeof "/sys/class/hidraw";
+			*(strchr(dev_name, '/')) = 0;
+
+			if (!strcmp(last_comp, RECEIVER_NAME)) {
+				/* Logitech receiver c52b and c532 - pass */
+			} else if (!strcmp(last_comp, "hid-generic")) {
+				/* need to test for older nano receiver c52f */
+				FILE *fp;
+				uint32_t vid = 0, pid = 0;
+
+				/* Assume that the first match is the receiver. Devices bound to
+				 * the same receiver may have the same modalias. */
+				snprintf(buf, sizeof buf, "/sys/class/hidraw/%s/device/modalias", dev_name);
+				if ((fp = fopen(buf, "r"))) {
+					int m = fscanf(fp, "hid:b%*04Xg%*04Xv%08Xp%08X", &vid, &pid);
+					if (m != 2) {
+						pid = 0;
+					}
+					fclose(fp);
+				}
+
+				if (vid != VID_LOGITECH || pid != PID_NANO_RECEIVER) {
+					continue;
+				}
+			} else { /* unknown driver */
+				continue;
+			}
+
+			snprintf(hiddev_name, sizeof hiddev_name, "/dev/%s", dev_name);
+			fd = open(hiddev_name, O_RDWR);
+			if (fd < 0) {
+				perror(hiddev_name);
+			} else {
+				break;
+			}
+		}
+	}
+
+	if (fd < 0) {
+		if (*hiddev_name) {
+			fprintf(stderr, "Logitech Unifying Receiver device is not accessible.\n"
+				"Try running this program as root or enable read/write permissions\n"
+				"for %s\n", hiddev_name);
+		} else {
+			fprintf(stderr, "No Logitech Unifying Receiver device found\n");
+			if (access("/sys/class/hidraw", R_OK)) {
+				fputs("The kernel must have CONFIG_HIDRAW enabled.\n",
+					stderr);
+			}
+			if (access("/sys/module/hid_logitech_dj", F_OK)) {
+				fprintf(stderr, "Driver is not loaded, try:"
+						"   sudo modprobe hid-logitech-dj\n");
+			}
+		}
+	}
+	globfree(&matches);
+
+	return fd;
 }
 
 static void hidpp_discard_messages(int fd)
