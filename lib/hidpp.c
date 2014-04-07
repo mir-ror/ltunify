@@ -28,8 +28,9 @@
 #include "hidpp.h"
 #include "debug.h"
 
-#define VID_LOGITECH		0x046d
-#define PID_NANO_RECEIVER	0xc52f
+#define VID_LOGITECH        0x046d
+#define PID_UNIFYING        0xc52b
+#define PID_NANO_RECEIVER   0xc52f
 #define RECEIVER_NAME "logitech-djreceiver"
 
 static inline bool is_valid_device_index(uint8_t ix)
@@ -117,7 +118,8 @@ int hidpp_open(void)
 					fclose(fp);
 				}
 
-				if (vid != VID_LOGITECH || pid != PID_NANO_RECEIVER) {
+				if (vid != VID_LOGITECH ||
+					(pid != PID_UNIFYING && pid != PID_NANO_RECEIVER)) {
 					continue;
 				}
 			} else { /* unknown driver */
