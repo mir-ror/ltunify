@@ -22,6 +22,18 @@
 #include <stdint.h>
 #include "hidpp.h"
 
+/* HID++ 2.0 error codes */
+#define HIDPP20_ERR_CODE_NOERROR                0x00
+#define HIDPP20_ERR_CODE_UNKNOWN                0x01
+#define HIDPP20_ERR_CODE_INVALIDARGUMENT        0x02
+#define HIDPP20_ERR_CODE_OUTOFRANGE             0x03
+#define HIDPP20_ERR_CODE_HWERROR                0x04
+#define HIDPP20_ERR_CODE_LOGITECH_INTERNAL      0x05
+#define HIDPP20_ERR_CODE_INVALID_FEATURE_INDEX  0x06
+#define HIDPP20_ERR_CODE_INVALID_FUNCTION_ID    0x07
+#define HIDPP20_ERR_CODE_BUSY                   0x08
+#define HIDPP20_ERR_CODE_UNSUPPORTED            0x09
+
 typedef struct {
 	uint8_t     feature_index;
 	uint16_t    feature_id;

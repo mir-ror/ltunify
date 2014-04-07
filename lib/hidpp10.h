@@ -40,6 +40,21 @@
 #define REG_PAIRING_INFO        0xB5
 #define REG_VERSION_INFO        0xF1 /* undocumented */
 
+/* HID++ 1.0 error codes */
+#define HIDPP_ERR_SUCCESS               0x00
+#define HIDPP_ERR_INVALID_SUBID         0x01
+#define HIDPP_ERR_INVALID_ADDRESS       0x02
+#define HIDPP_ERR_INVALID_VALUE         0x03
+#define HIDPP_ERR_CONNECT_FAIL          0x04
+#define HIDPP_ERR_TOO_MANY_DEVICES      0x05
+#define HIDPP_ERR_ALREADY_EXISTS        0x06
+#define HIDPP_ERR_BUSY                  0x07
+#define HIDPP_ERR_UNKNOWN_DEVICE        0x08
+#define HIDPP_ERR_RESOURCE_ERROR        0x09
+#define HIDPP_ERR_REQUEST_UNAVAILABLE   0x0A
+#define HIDPP_ERR_INVALID_PARAM_VALUE   0x0B
+#define HIDPP_ERR_WRONG_PIN_CODE        0x0C
+
 /**
  * Attempts to dispatch a register query.
  *
