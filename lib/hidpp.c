@@ -205,19 +205,23 @@ bool hidpp_read_msg(int fd, int timeout, HidppMessage *msg,
 		memset(&response, 0, sizeof(response));
 		r = poll_read(fd, timeout, &response, sizeof(response));
 		if (r > 0) {
-			trace_dump_data("rd", (uint8_t *) msg, r);
+			trace_dump_data("rd", (uint8_t *) &response, r);
 
 			if (r < HIDPP_SHORT_LEN) {
 				trace_log("Impossible short read: %i\n", r);
 			} else if (response.report_id == HIDPP_SHORT ||
-			           response.report_id == HIDPP_LONG) {
+			           response.report_id == HIDPP_LONG ||
+			           response.report_id == DJ_SHORT ||
+			           response.report_id == DJ_LONG) {
 				uint8_t ix = response.device_index;
 
 				if (!is_valid_device_index(ix) && ix != 0xFF) {
 					trace_log("Invalid device index: %i\n", ix);
 				} else if (cb(&response, userdata)) {
 					/* response is accepted, return message */
-					memcpy(msg, &response, sizeof(response));
+					if (msg) {
+						memcpy(msg, &response, sizeof(response));
+					}
 					return true;
 				}
 			}

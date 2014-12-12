@@ -29,6 +29,10 @@
 #define HIDPP_SHORT_LEN         7
 #define HIDPP_LONG              0x11
 #define HIDPP_LONG_LEN          20
+#define DJ_SHORT                0x20
+#define DJ_SHORT_LEN            15
+#define DJ_LONG                 0x21
+#define DJ_LONG_LEN             32
 
 typedef struct HidppMessage {
 	uint8_t report_id;
@@ -39,13 +43,16 @@ typedef struct HidppMessage {
 			uint8_t address;
 		}; /**< HID++ 1.0 naming */
 		struct {
-			uint8_t feature_id;
+			uint8_t feature_index;
+#define HIDPP20_FUNC(func)	(((func) << 4) | 4) /* swId is arbitrary */
 			uint8_t func; /* (func << 4) | swId */
 		}; /**< HID++ 2.0 naming */
 	};
 	union {
-		uint8_t params[3];
-		uint8_t params_l[16];
+		uint8_t params[HIDPP_SHORT_LEN - 4];
+		uint8_t params_l[HIDPP_LONG_LEN - 4];
+		uint8_t dj_params[DJ_SHORT_LEN - 4];
+		uint8_t dj_params_l[DJ_LONG_LEN - 4];
 	};
 } HidppMessage;
 
@@ -82,10 +89,15 @@ bool hidpp_write_report(int fd, HidppMessage *msg);
  * @param fd        File descriptor of the hidraw device.
  * @param timeout   Timeout for this function in milliseconds.
  * @param msg[out]  On success, the message is written to this pointer.
- *                  Otherwise, the contents are unmodified.
- * @param cb        Function that should be called for new HID++ messages.
+ *                  Otherwise, the contents are unmodified. If this pointer is
+ *                  NULL, then the caller won't be able to see the message that
+ *                  got accepted.
+ * @param cb        Callback function for incoming HID++ and DJ reports.
  *                  If true is returned, then no more messages are read. msg is
  *                  not allowed to be modified if the callback returns false.
+ *                  The callback must check the report_id field as it is
+ *                  possible that non-HID++ reports are received (DJ enumerator
+ *                  messages for example).
  * @param userdata  Data that is passed unchanged to the callback function.
  * @return true iff there exists a message that was accepted by the callback
  * function within the timeout.
