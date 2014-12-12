@@ -39,35 +39,56 @@ typedef struct {
 	uint16_t    feature_id;
 	uint8_t     feature_type;
 } FeatureInfo;
-
+/* TODO: HID++ 1.0 vs 2.0 errors? */
 /**
  * Retrieves the number of HID++ 2.0 features.
  *
  * @param fd        File descriptor of the hidraw device.
+ * @param device_index Device index (between 1 and 6).
+ * @param ifeatureset[in] The IFeatureSet feature to call this method on.
  * @param count[out] The number of HID++ 2.0 features.
  * @return Zero on success, a HID++ error code otherwise.
  */
-int hidpp20_get_features_count(int fd, uint8_t *count);
+int hidpp20_get_features_count(int fd, uint8_t device_index,
+                               const FeatureInfo *ifeatureset,
+                               uint8_t *count);
 
 /**
  * Retrieves feature information from a feature index.
  *
  * @param fd        File descriptor of the hidraw device.
+ * @param device_index Device index (between 1 and 6).
+ * @param ifeatureset[in] The IFeatureSet feature to call this method on.
  * @param feature_index A feature index to find information for.
  * @param fi[out]   Feature information on success.
  * @return Zero on success, a HID++ error code otherwise.
  */
-int hidpp20_get_feature(int fd, uint8_t feature_index, FeatureInfo *fi);
+int hidpp20_get_feature(int fd, uint8_t device_index,
+                        const FeatureInfo *ifeatureset,
+                        uint8_t feature_index, FeatureInfo *fi);
 
 /**
  * Retrieves the feature index for a given feature ID.
  *
  * @param fd        File descriptor of the hidraw device.
+ * @param device_index Device index (between 1 and 6).
  * @param feature_id A 16-bit feature identifier.
  * @param fi[out]   Feature information on success.
  * @return Zero on success, a HID++ error code otherwise.
  */
-int hidpp20_get_feature_by_id(int fd, uint16_t feature_id, FeatureInfo *fi);
+int hidpp20_get_feature_by_id(int fd, uint8_t device_index, uint16_t feature_id,
+                              FeatureInfo *fi);
+
+/**
+ * Retrieves all features of a connected device.
+ *
+ * @param fd        File descriptor of the hidraw device.
+ * @param device_index Device index (between 1 and 6).
+ * @param count[out] The number of discovered features or 0 if an error occured
+ * (in that case, NULL is returned too).
+ * @return NULL on error or an array of features supported by the device.
+ */
+FeatureInfo *hidpp20_get_features(int fd, uint8_t device_index, unsigned *count);
 
 /**
  * Retrieves the HID++ version for the device.
