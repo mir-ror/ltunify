@@ -17,42 +17,72 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UNIFYING_H
-#define UNIFYING_H
-#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "unifying.h"
+#include "hidpp.h"
+#include "hidpp20.h"
 
-typedef struct UnifyingState UnifyingState;
+typedef struct HidppDevice {
+	uint8_t     device_index;
+	uint16_t    hidpp_version;
+	uint16_t    wireless_pid;
+	uint8_t     device_type;
+	uint32_t    serial_number;
+	char        name[15];       /**< Short UTF-8 encoded name string. */
+	uint16_t    notification_flags;
+	union {
+#if 0
+		struct {
+		}; /**< details specific to HID++ 1.0 */
+#endif
+		struct {
+			unsigned features_count;
+			FeatureInfo *features;
+		}; /**< details specific to HID++ 2.0 */
+	};
+} HidppDevice;
 
-typedef enum {
-	FWVER_MAIN = 0, /**< Main firmware version */
-	FWVER_BL,       /**< Bootloader version */
-	FWVER_HW,       /**< Hardware version */
-} FirmwareType;
+struct UnifyingState {
+	int fd;
+	uint8_t devices_count; /**< The number of paired devices */
+	/**
+	 * Devices that are currently paired to the receiver. If the device_index
+	 * property of a device is zero, then either the device is not paired or the
+	 * device information has not been acquired yet.
+	 */
+	HidppDevice devices[MAX_DEVICES];
+	struct {
+		uint8_t     notification_flags;
+		uint32_t    serial_number;
+	} receiver;
+};
 
-typedef struct {
-	char prefix[4]; /**< Prefix of the firmware version (if any) */
-	uint8_t major;
-	uint8_t minor;
-	uint16_t build;
-} FirmwareVersion;
+UnifyingState *unifying_new(int fd)
+{
+	UnifyingState *s;
 
-/**
- * Attempts to open a Unifying device.
- *
- * @param fd    File descriptor of the hidraw device.
- * @return A pointer to a structure that must be released by
- *         unifying_device_close(), or NULL on error.
- */
-UnifyingState *unifying_new(int fd);
+	if (fd < 0)
+		return NULL;
 
-/**
- * Closes the file descriptor associated with this device and releases memory
- * claimed for this structure.
- *
- * @param s     State to be freed.
- */
-void unifying_close(UnifyingState *s);
+	s = calloc(1, sizeof(UnifyingState));
+	if (!s)
+		return NULL;
 
+	s->fd = fd;
+
+	return s;
+}
+
+void unifying_close(UnifyingState *s)
+{
+	if (s->fd >= 0)
+		close(s->fd);
+
+	free(s);
+}
+
+#if 0
 int unifying_rvr_get_version(UnifyingState *s, FirmwareType type,
                              FirmwareVersion *fw);
 int unifying_rvr_get_serial(UnifyingState *s, uint32_t *serial);
@@ -67,13 +97,7 @@ int unifying_dev_get_type(UnifyingState *s, uint8_t ix, uint8_t *devtype);
 int unifying_dev_get_serial(UnifyingState *s, uint8_t ix, uint32_t *serial);
 
 /* pairing related */
-/**
- * Allows new devices to pair with the receiver.
- *
- * @param s     Unifying device state.
- * @param timeout Open lock timeout in seconds (0 is default, 30s).
- */
-int unifying_dev_pairing_open(UnifyingState *s, uint8_t timeout);
+int unifying_dev_pairing_open(UnifyingState *s);
 int unifying_dev_pairing_unpair(UnifyingState *s, uint8_t ix);
 int unifying_dev_pairing_close(UnifyingState *s);
 #endif
