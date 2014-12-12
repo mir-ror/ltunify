@@ -45,8 +45,16 @@ static bool hidpp10_msg_filter(HidppMessage *msg, void *userdata)
 	}
 
 	ok = ok && msg->sub_id == out->sub_id && msg->address == out_addr;
+	/* Non-HID++ messages handling, maybe the callback is interested. */
+	if (msg->report_id != HIDPP_SHORT && msg->report_id != HIDPP_LONG) {
+		if (cd->cb) {
+			cd->cb(msg, cd->userdata);
+		}
+		return false;
+	}
 
-	switch (out->report_id) {
+	/* HID++ report handling */
+	switch (msg->sub_id) {
 	case SUB_SET_REGISTER:
 	case SUB_GET_REGISTER:
 	case SUB_SET_LONG_REGISTER:
