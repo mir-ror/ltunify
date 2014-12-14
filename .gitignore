@@ -2,3 +2,5 @@
 read-dev-usbmon
 hidraw
 ltunify
+*.o
+*.a
