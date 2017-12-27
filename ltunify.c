@@ -1214,7 +1214,7 @@ int open_hidraw(void) {
 			}
 			if (access("/sys/module/hid_logitech_dj", F_OK)) {
 				fprintf(stderr, "Driver is not loaded, try:"
-						"   sudo modprobe hid-logitech-dj\n");
+						"   sudo modprobe hid_logitech_dj\n");
 			}
 		}
 	}
